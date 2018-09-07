@@ -337,7 +337,7 @@ public class PQueue {
             cdrOutLtestConn = connectionFactory.createConnection();
             cdrOutLtestSession = cdrOutLtestConn.createSession(false, Session.AUTO_ACKNOWLEDGE);
             cdrOutLtestDestination = cdrOutLtestSession.createQueue("CDR_OUT_LTEST");            
-            cdrOutLtestProducer = cdrOutLtestSession.createProducer(cdrInLtestSession);
+            cdrOutLtestProducer = cdrOutLtestSession.createProducer(cdrOutLtestSession);
             cdrOutLtestProducer.setDeliveryMode(DeliveryMode.PERSISTENT);
             cdrOutLtestConn.start();
 		}
