@@ -45,6 +45,7 @@ public class PQueue {
 	private static final int DEST_CDR_IN_LTEST = 2;
 	private static final int DEST_CDR_OUT_LTEST = 3;
 	private static final int DEST_CDR = 4;
+	private static final int DEST_CDR_START = 5;
 
 	private final int RECONNECT_TIME_DEFAULT = 10000;	// in milliseconds
 	
@@ -102,6 +103,12 @@ public class PQueue {
     private Destination cdrDestination = null;
     private MessageProducer cdrProducer = null;
     
+    // CDR_START message setting
+    private Connection cdrStartConn = null;
+    private Session cdrStartSession = null;
+    private Destination cdrStartDestination = null;
+    private MessageProducer cdrStartProducer = null;
+
     // CDR_FILTERED message setting
     private Connection cdrFilteredConn = null;
     private Session cdrFilteredSession = null;
@@ -317,6 +324,14 @@ public class PQueue {
             cdrProducer.setDeliveryMode(DeliveryMode.PERSISTENT);             
             cdrConn.start();
 
+            // create CDR connection, session and queue
+            cdrStartConn = connectionFactory.createConnection();
+            cdrStartSession = cdrStartConn.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            cdrStartDestination = cdrStartSession.createQueue("CDR_START");            
+            cdrStartProducer = cdrStartSession.createProducer(cdrStartDestination);
+            cdrStartProducer.setDeliveryMode(DeliveryMode.PERSISTENT);             
+            cdrStartConn.start();
+
             // create CDR_FILTERED connection, session and queue
             cdrFilteredConn = connectionFactory.createConnection();
             cdrFilteredSession = cdrFilteredConn.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -361,6 +376,23 @@ public class PQueue {
         		cdrConn.stop();
         		cdrConn.close();
         		cdrConn = null;
+        	}
+        }
+        catch (Exception e) {
+        }		
+        try {
+        	if (cdrStartSession != null) {
+        		cdrStartSession.close();
+        		cdrStartSession = null;
+        	}
+        }
+        catch (Exception e) {
+        }
+        try {
+        	if (cdrStartConn != null) {
+        		cdrStartConn.stop();
+        		cdrStartConn.close();
+        		cdrStartConn = null;
         	}
         }
         catch (Exception e) {
@@ -524,6 +556,9 @@ public class PQueue {
 	            				// process message
 	            				switch(isCdrFilteredMessage(msg))
 	            				{
+	            					case DEST_CDR_START:
+	            						cdrStartProducer.send(msg);
+	            						break;
 	            					case DEST_CDR:
 	            						try
 		            					{
@@ -583,7 +618,8 @@ public class PQueue {
     private int isCdrFilteredMessage(MapMessage msg) {
     	try 
     	{
-    		if(msg.getInt("TMType") == TM_CDR_FILTERED)
+			int msgType = msg.getInt("TMType");
+    		if(msgType == TM_CDR_FILTERED)
     		{
     			if(msg.getString("aid").startsWith("T"))
     			{
@@ -600,10 +636,12 @@ public class PQueue {
     				return DEST_CDR_FILTERED;
     			}
     		}
-    		else
-    		{
-    			return DEST_CDR;
+    		else if (msgType == TM_CDR_START) {
+				return DEST_CDR_START;
     		}
+			else {
+				return DEST_CDR;
+			}
     	}
     	catch(Exception e) {
     		return DEST_CDR_FILTERED;
