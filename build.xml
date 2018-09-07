@@ -1,51 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Server" default="build" basedir=".">
+<project name="pcs_framework" default="build" basedir=".">
 
-        <!-- Define a build.properties file that contains the jar files used in -->
-        <!-- various projects.  This allows you to define them in one location and -->
-        <!-- reference them throughout all the build scripts in the projects -->
-        <!-- This is located in my home directory, but it would make a lot of sense -->
-        <!-- to place it in the base directory of your workspace and reference all the -->
-        <!-- projects from there -->
-        <property file="build.properties"/>
-		<property name="lib.dir" location="libs"/>
-	    <property name="srcDir" location="src"/>
-	    <property name="binDir" location="bin"/>
-	    <property name="distDir" location="dist"/>
-		<property name="resourcesDir" location="${distDir}/resources"/>
-		<property name="scriptsDir" location="${distDir}/scripts"/>
-        <property name="jarFile" location="${distDir}/lib/pcs_framework.jar"/>
-        <property name="javadocDir" location="${distDir}/docs"/>
-        <property name="version.major" value="2" />
-        <property name="version.minor" value="0" />
-        <property name="build_number" value="0" />
+	<!-- Define a build.properties file that contains the jar files used in -->
+	<!-- various projects.  This allows you to define them in one location and -->
+	<!-- reference them throughout all the build scripts in the projects -->
+	<!-- This is located in my home directory, but it would make a lot of sense -->
+	<!-- to place it in the base directory of your workspace and reference all the -->
+	<!-- projects from there -->
+	<property file="build.properties"/>
+	<property name="build" location="build"/>
+	<property name="lib.dir" location="libs"/>
+	<property name="srcDir" location="src"/>
+	<property name="binDir" location="bin"/>
+	<property name="distDir" location="dist"/>
+	<property name="resourcesDir" location="${distDir}/resources"/>
+	<property name="scriptsDir" location="${distDir}/scripts"/>
+	<property name="jarFile" location="${distDir}/lib/pcs_framework.jar"/>
+	<property name="javadocDir" location="${distDir}/docs"/>
+	<property name="version.major" value="2" />
+	<property name="version.minor" value="0" />
+	<property name="build_number" value="0" />
 
-        <!-- <echoproperties/> -->
+	<!-- <echoproperties/> -->
 
-        <!-- These are defined in the build.properties file, just reference them here -->
-        <path id="compile.classpath">
-            <fileset dir="${lib.dir}/">
-                <include name="*.jar"/>
-            </fileset>
-        </path>
-        <target name="initialize">
-                <delete dir="${binDir}"/>
-                <delete dir="${distDir}"/>
-                <mkdir dir="${binDir}"/>
-                <mkdir dir="${distDir}"/>
-                <mkdir dir="${distDir}/lib"/>
-        </target>
+	<!-- These are defined in the build.properties file, just reference them here -->
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}/">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+	<target name="initialize">
+		<delete dir="${binDir}"/>
+		<delete dir="${distDir}"/>
+		<delete dir="${build}"/>
+		<mkdir dir="${binDir}"/>
+		<mkdir dir="${distDir}"/>
+		<mkdir dir="${distDir}/lib"/>
+		<mkdir dir="${build}"/>
+	</target>
 
-        <target name="compile" depends="initialize">
-			<javac srcdir="${srcDir}"
-					destDir="${binDir}"
-					debug="on"
-					source="1.6"
-					target="1.6"
-					bootclasspath="${JAVA_HOME}/jre/lib/rt.jar">
-                <classpath refid="compile.classpath"/>
-            </javac>
-        </target>
+	<target name="compile" depends="initialize">
+		<javac srcdir="${srcDir}"
+				destDir="${binDir}"
+				debug="on"
+				source="1.6"
+				target="1.6"
+				bootclasspath="${JAVA_HOME}/jre/lib/rt.jar">
+			<classpath refid="compile.classpath"/>
+		</javac>
+	</target>
 	
     <target name="jar" depends="initialize, compile">
         <jar destfile="${jarFile}" basedir="${binDir}"/>
@@ -54,29 +57,32 @@
 				<include name="*.jar" />
     		</fileset>
 		</copy>
+		<tar destfile="${build}/${ant.project.name}.${build.number}.tar" >
+			<tarfileset dir="${distDir}" />
+		</tar>
 	</target>
 
     <target name="build" depends="initialize, compile, javadoc, jar"/>
 
     <target name="javadoc">
-            <delete dir="${javadocDir}"/>
-            <mkdir dir="${javadocDir}"/>
-            <javadoc destdir="${javadocDir}"
-       	        packagenames="org.sipdev.*"
-        	sourcepath="${srcDir}"
-                version="true"
-            	access="private"
-            	windowtitle="${ant.project.name}">
-                <classpath refid="compile.classpath"/>
-            </javadoc>
+		<delete dir="${javadocDir}"/>
+		<mkdir dir="${javadocDir}"/>
+		<javadoc destdir="${javadocDir}"
+			packagenames="org.sipdev.*"
+			sourcepath="${srcDir}"
+			version="true"
+			access="private"
+			windowtitle="${ant.project.name}">
+			<classpath refid="compile.classpath"/>
+		</javadoc>
     </target>
 	
     <target name="clean" description="Deletes generated files and folders by this build.">
-            <delete dir="${binDir}"/>
-            <delete dir="${distDir}"/>
-            <delete failonerror="false">
-                    <fileset dir="${basedir}" includes="*.tar" />
-            </delete>
+        <delete dir="${binDir}"/>
+        <delete dir="${distDir}"/>
+        <delete failonerror="false">
+            <fileset dir="${basedir}" includes="*.tar" />
+        </delete>
     </target>
 
 </project>
